@@ -1,0 +1,8 @@
+.markjar {
+	white-space: preserve;
+	word-wrap: break-word;
+
+	.mj-line {
+		min-height: 1.5em;
+	}
+}

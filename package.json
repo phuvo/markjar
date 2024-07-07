@@ -1,0 +1,12 @@
+{
+  "name": "markjar",
+  "version": "0.0.1",
+  "description": "A simple and delightful Markdown editor",
+  "license": "MIT",
+  "dependencies": {
+    "morphdom": "^2.7.3"
+  },
+  "devDependencies": {
+    "@highlightjs/cdn-assets": "^11.10.0"
+  }
+}

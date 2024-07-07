@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Markjar</title>
+	<link rel="stylesheet" href="./node_modules/@highlightjs/cdn-assets/styles/default.css" />
+	<link rel="stylesheet" href="./markjar.css" />
+	<style>
+:root {
+	/* https://github.com/twbs/bootstrap/blob/main/scss/_variables.scss */
+	--gray-100: #f8f9fa;
+	--gray-200: #e9ecef;
+	--gray-300: #dee2e6;
+	--gray-400: #ced4da;
+	--gray-500: #adb5bd;
+	--gray-600: #6c757d;
+	--gray-700: #495057;
+	--gray-800: #343a40;
+	--gray-900: #212529;
+}
+html {
+	background-color: var(--gray-100);
+	color: var(--gray-900);
+	font-family: "Calibri", sans-serif;
+	line-height: 1.5;
+}
+body {
+	margin: 0;
+}
+main {
+	width: 48rem;
+	margin: 3rem auto;
+}
+h1 {
+	margin: 3rem 0;
+	color: var(--gray-800);
+	font-size: 2rem;
+	font-weight: 300;
+	text-align: center;
+}
+#editor {
+	font-size: 1.25rem;
+	height: 32rem;
+	border: 1px solid var(--gray-400);
+	border-radius: 4px;
+	outline: none;
+	& {
+		padding: 1.5em 1.5em 1.5em 3em;
+	}
+	&:focus {
+		border-color: var(--gray-500);
+	}
+}
+	</style>
+</head>
+
+<body>
+	<main>
+		<h1>Markjar – a simple and delightful Markdown editor</h1>
+		<div id="editor"></div>
+	</main>
+	<script type="module">
+import hljs from './node_modules/@highlightjs/cdn-assets/es/core.js';
+import morphdom from './node_modules/morphdom/dist/morphdom-esm.js';
+import Markjar from './markjar.js';
+
+const editor = document.getElementById('editor');
+const markjar = new Markjar(editor, { hljs, morphdom });
+	</script>
+</body>
+
+</html>
