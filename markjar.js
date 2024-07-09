@@ -54,6 +54,29 @@ function Markjar(editor, options) {
 	editor.innerHTML = '<div class="mj-line"></div>';
 
 
+	const changedLines = new Set();
+
+
+	const updateChangedLines = debounce(() => {
+		const pos = getCursorPos(editor);
+		changedLines.forEach(line => {
+			const html = highlight(line.textContent);
+			morphdom(line, `<div class="mj-line">${html}</div>`);
+		});
+		changedLines.clear();
+		setCursorPos(editor, pos);
+	}, 50);
+
+
+	editor.addEventListener('beforeinput', event => {
+		const lines = getChangedLines(event, editor);
+		if (lines.length > 0) {
+			changedLines.add(...lines);
+			updateChangedLines();
+		}
+	});
+
+
 	return {
 		setText,
 		getText,
@@ -146,6 +169,27 @@ function debounce(fn, timeout) {
 		cancelIdleCallback(id);
 		id = requestIdleCallback(() => fn(...args), { timeout });
 	};
+}
+
+
+/**
+ * @param {InputEvent} event
+ * @param {HTMLElement} editor
+ * @returns {HTMLElement[]}
+ */
+function getChangedLines(event, editor) {
+	return event.getTargetRanges().flatMap(range => {
+		if (event.inputType === 'insertText') {
+			const parentElement = range.startContainer.nodeName === '#text'
+				? range.startContainer.parentElement
+				: range.startContainer;
+			const line = parentElement.closest('div');
+			return [line];
+		}
+
+		console.log('getChangedLines', event.inputType, range);
+		return [];
+	});
 }
 
 
