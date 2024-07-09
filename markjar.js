@@ -1,29 +1,19 @@
+import hljs from 'highlight.js/lib/core';
+import morphdom from 'morphdom';
+
+
 /**
  * @param {HTMLElement} editor
  */
 function Markjar(editor, options) {
-	const { hljs, morphdom } = options;
-
-	hljs.registerLanguage('promptmark', PromptMark);
-
-	const highlight = (text) => {
-		return hljs.highlight(text, { language: 'promptmark' }).value;
-	};
-
-
-	const createLine = (text) => {
-		const line = document.createElement('div');
-		line.className = 'mj-line';
-		line.innerHTML = highlight(text);
-		return line;
-	};
+	const service = options?.languageService || new LanguageService();
 
 
 	const updateText = (text) => {
 		const textLines = text.split('\n');
 		for (let i = 0; i < textLines.length; i++) {
 			if (textLines[i] !== editor.children[i]?.textContent) {
-				const newLine = createLine(textLines[i]);
+				const newLine = service.createLine(textLines[i]);
 				if (i < editor.children.length) {
 					editor.replaceChild(newLine, editor.children[i]);
 				} else {
@@ -60,8 +50,8 @@ function Markjar(editor, options) {
 	const updateChangedLines = debounce(() => {
 		const pos = getCursorPos(editor);
 		changedLines.forEach(line => {
-			const html = highlight(line.textContent);
-			morphdom(line, `<div class="mj-line">${html}</div>`);
+			const newLine = service.updateLine(line.textContent);
+			morphdom(line, newLine);
 		});
 		changedLines.clear();
 		setCursorPos(editor, pos);
@@ -147,7 +137,7 @@ function moveCursorToColumn(element, column, range) {
 	};
 
 	const moveTo = (node) => {
-		const sibling = node.nextSibling;
+		const sibling = node.parentElement.nextSibling;
 		if (sibling?.classList.contains('mj-set-cursor')) {
 			range.setEnd(sibling, 0);
 		} else {
@@ -195,7 +185,7 @@ function getChangedLines(event, editor) {
 
 function PromptMark() {
 	const H1_HASH = {
-		className: 'section mj-hash mj-h1-hash',
+		className: 'section mj-hash mj-h1-hash mj-block',
 		match: /^# /,
 	};
 	const H1_CONTENT = {
@@ -217,4 +207,37 @@ function PromptMark() {
 }
 
 
-export default Markjar;
+function LanguageService() {
+	hljs.registerLanguage('promptmark', PromptMark);
+
+
+	const highlight = (text) => {
+		return hljs.highlight(text, { language: 'promptmark' }).value;
+	};
+
+
+	const createLine = (text) => {
+		const line = document.createElement('div');
+		line.className = 'mj-line';
+		line.innerHTML = highlight(text);
+		return line;
+	};
+
+
+	const updateLine = (text) => {
+		const newLine = createLine(text);
+		if (newLine.lastChild?.classList?.contains('mj-block')) {
+			newLine.insertAdjacentHTML('beforeend', '<span class="mj-set-cursor"></span>');
+		}
+		return newLine;
+	};
+
+
+	return {
+		createLine,
+		updateLine,
+	};
+}
+
+
+export { Markjar, LanguageService };

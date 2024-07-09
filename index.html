@@ -41,18 +41,24 @@ h1 {
 }
 #editor {
 	font-size: 1.25rem;
-	height: 32rem;
+	height: 24rem;
 	border: 1px solid var(--gray-400);
 	border-radius: 4px;
 	outline: none;
-	& {
-		padding: 1.5em 1.5em 1.5em 3em;
-	}
 	&:focus {
 		border-color: var(--gray-500);
 	}
+	padding: 1.5em 1.5em 1.5em 3em;
 }
 	</style>
+	<script type="importmap">
+{
+	"imports": {
+		"highlight.js/lib/core": "./node_modules/@highlightjs/cdn-assets/es/core.js",
+		"morphdom": "./node_modules/morphdom/dist/morphdom-esm.js"
+	}
+}
+	</script>
 </head>
 
 <body>
@@ -61,12 +67,9 @@ h1 {
 		<div id="editor"></div>
 	</main>
 	<script type="module">
-import hljs from './node_modules/@highlightjs/cdn-assets/es/core.js';
-import morphdom from './node_modules/morphdom/dist/morphdom-esm.js';
-import Markjar from './markjar.js';
-
+import { Markjar } from './markjar.js';
 const editor = document.getElementById('editor');
-const markjar = new Markjar(editor, { hljs, morphdom });
+const markjar = new Markjar(editor);
 	</script>
 </body>
 
