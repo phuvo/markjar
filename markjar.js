@@ -188,20 +188,48 @@ function PromptMark() {
 		className: 'section mj-hash mj-h1-hash mj-block',
 		match: /^# /,
 	};
-	const H1_CONTENT = {
-		className: 'section mj-h1-content',
-		match: /(?<=^# )[^\n]+/,
+	const H2_HASH = {
+		className: 'section mj-hash mj-h2-hash mj-block',
+		match: /^## /,
+	};
+	const H3_HASH = {
+		className: 'section mj-hash mj-h3-hash mj-block',
+		match: /^### /,
 	};
 	const HASH = {
 		className: ' mj-hash',
 		match: /^#+/,
 	};
+	const HEADER_TEXT = {
+		className: 'section',
+		match: /(?<=^#+ )[^\n]+/,
+	};
+
+	const OL_LIST = {
+		className: 'bullet mj-bullet mj-ol-list mj-block',
+		match: /^\d+\. /,
+	};
+	const UL_LIST = {
+		className: 'bullet mj-bullet mj-ul-list mj-block',
+		match: /^[*+-] /,
+	};
+	const BULLET = {
+		className: ' mj-bullet',
+		match: /^([*+-]|(\d+\.))/,
+	};
+
 	return {
 		name: 'PromptMark',
 		contains: [
 			H1_HASH,
-			H1_CONTENT,
+			H2_HASH,
+			H3_HASH,
 			HASH,
+			HEADER_TEXT,
+
+			OL_LIST,
+			UL_LIST,
+			BULLET,
 		],
 	};
 }

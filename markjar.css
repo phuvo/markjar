@@ -6,3 +6,49 @@
 		min-height: 1.5em;
 	}
 }
+
+.hanging-markers {
+	.mj-hash {
+		transition: margin .2s;
+	}
+	.mj-h1-hash,
+	.mj-h2-hash,
+	.mj-h3-hash {
+		display: inline-block;
+		font-family: "Cascadia Code", monospace;
+		font-size: .9em;
+		font-weight: 600;
+		text-align: right;
+	}
+	.mj-h1-hash {
+		width: 1.2em;
+		margin-left: -1.2em;
+	}
+	.mj-h2-hash {
+		width: 1.8em;
+		margin-left: -1.8em;
+	}
+	.mj-h3-hash {
+		width: 2.4em;
+		margin-left: -2.4em;
+	}
+
+	.mj-bullet {
+		transition: margin .2s;
+	}
+	.mj-ol-list,
+	.mj-ul-list {
+		display: inline-block;
+		text-align: right;
+	}
+	.mj-ol-list {
+		width: 1.8em;
+		margin-left: -1.8em;
+	}
+	.mj-ul-list {
+		width: 1.2em;
+		margin-left: -1.2em;
+		font-family: "Cascadia Code", monospace;
+		font-size: .9em;
+	}
+}
