@@ -10,30 +10,54 @@ function Markjar(editor, options) {
 		return hljs.highlight(text, { language: 'promptmark' }).value;
 	};
 
-	/**
-	 * @param {HTMLElement} lineEl
-	 */
-	const formatLine = (lineEl) => {
-		const text = lineEl.textContent;
-		const html = highlight(text);
-		morphdom(lineEl, `<div class="mj-line">${html}</div>`);
+
+	const createLine = (text) => {
+		const line = document.createElement('div');
+		line.className = 'mj-line';
+		line.innerHTML = highlight(text);
+		return line;
 	};
+
+
+	const updateText = (text) => {
+		const textLines = text.split('\n');
+		for (let i = 0; i < textLines.length; i++) {
+			if (textLines[i] !== editor.children[i]?.textContent) {
+				const newLine = createLine(textLines[i]);
+				if (i < editor.children.length) {
+					editor.replaceChild(newLine, editor.children[i]);
+				} else {
+					editor.appendChild(newLine);
+				}
+			}
+		}
+		while (editor.children.length > textLines.length) {
+			editor.removeChild(editor.lastChild);
+		}
+	};
+
+
+	const setText = (text) => {
+		const pos = getCursorPos(editor);
+		updateText(text);
+		setCursorPos(editor, pos);
+	};
+
+
+	const getText = () => {
+		return Array.from(editor.children).map(line => line.textContent).join('\n');
+	};
+
 
 	editor.classList.add('markjar');
 	editor.contentEditable = 'true';
 	editor.innerHTML = '<div class="mj-line"></div>';
 
-	editor.addEventListener('input', event => {
-		if (event.inputType === 'insertText') {
-			const position = getCursorPos(editor);
-			const lineEl = editor.children[position.line];
-			formatLine(lineEl);
-			setCursorPos(editor, position);
-		}
-		else if (event.inputType === 'insertParagraph') {
-			// Do nothing
-		}
-	});
+
+	return {
+		setText,
+		getText,
+	};
 }
 
 
