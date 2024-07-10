@@ -2,6 +2,10 @@
   "name": "markjar",
   "version": "0.0.1",
   "description": "A simple and delightful Markdown editor",
+  "author": {
+    "name": "Phu Vo",
+    "email": "phu.hn.vo@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "morphdom": "^2.7.3"
