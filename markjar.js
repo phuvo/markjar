@@ -44,24 +44,40 @@ function Markjar(editor, options) {
 	editor.innerHTML = '<div class="mj-line"></div>';
 
 
+	/**
+	 * @type {Set<HTMLElement>}
+	 */
 	const changedLines = new Set();
 
 
-	const updateChangedLines = debounce(() => {
+	const updateChangedLines = makeIdle(() => {
 		const pos = getCursorPos(editor);
+
 		changedLines.forEach(line => {
+			if (line.parentElement !== editor) {
+				console.warn('Line not in editor', line);
+				return;
+			}
 			const newLine = service.updateLine(line.textContent);
 			morphdom(line, newLine);
 		});
 		changedLines.clear();
+
+		editor.querySelectorAll(':scope > br').forEach(br => {
+			editor.replaceChild(service.createLine(''), br);
+		});
+
 		setCursorPos(editor, pos);
 	}, 50);
 
 
 	editor.addEventListener('beforeinput', event => {
-		const lines = getChangedLines(event, editor);
-		if (lines.length > 0) {
-			changedLines.add(...lines);
+		const ranges = event.getTargetRanges();
+		console.assert(ranges.length === 1);
+
+		const line = getLineElement(ranges[0].startContainer, editor);
+		if (line) {
+			changedLines.add(line);
 			updateChangedLines();
 		}
 	});
@@ -102,7 +118,8 @@ function setCursorPos(editor, pos) {
 	const selection = window.getSelection();
 	const range = document.createRange();
 
-	const lineEl = editor.children[pos.line];
+	const validLine = Math.min(Math.max(pos.line, 0), editor.children.length - 1);
+	const lineEl = editor.children[validLine];
 	moveCursorToColumn(lineEl, pos.column, range);
 
 	selection.removeAllRanges();
@@ -146,40 +163,40 @@ function moveCursorToColumn(element, column, range) {
 		range.collapse();
 	};
 
-	walkNode(element);
+	if (element.textContent.length === 0) {
+		range.setEnd(element, 0);
+		range.collapse();
+	} else {
+		walkNode(element);
+	}
+}
+
+
+/**
+ * @param {Node} node
+ * @param {HTMLElement} editor
+ * @returns {Node|null}
+ */
+function getLineElement(node, editor) {
+	if (node === editor) {
+		return null;
+	}
+	if (node.parentElement === editor) {
+		return node;
+	}
+	return node.parentElement.closest('div');
 }
 
 
 /**
  * @param {number} timeout
  */
-function debounce(fn, timeout) {
+function makeIdle(fn, timeout) {
 	let id;
 	return (...args) => {
 		cancelIdleCallback(id);
 		id = requestIdleCallback(() => fn(...args), { timeout });
 	};
-}
-
-
-/**
- * @param {InputEvent} event
- * @param {HTMLElement} editor
- * @returns {HTMLElement[]}
- */
-function getChangedLines(event, editor) {
-	return event.getTargetRanges().flatMap(range => {
-		if (event.inputType === 'insertText') {
-			const parentElement = range.startContainer.nodeName === '#text'
-				? range.startContainer.parentElement
-				: range.startContainer;
-			const line = parentElement.closest('div');
-			return [line];
-		}
-
-		console.log('getChangedLines', event.inputType, range);
-		return [];
-	});
 }
 
 
@@ -247,7 +264,7 @@ function LanguageService() {
 	const createLine = (text) => {
 		const line = document.createElement('div');
 		line.className = 'mj-line';
-		line.innerHTML = highlight(text);
+		line.innerHTML = text ? highlight(text) : '<br>';
 		return line;
 	};
 
