@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<title>Markjar</title>
 	<link rel="stylesheet" href="./node_modules/@highlightjs/cdn-assets/styles/default.css" />
-	<link rel="stylesheet" href="./markjar.css" />
+	<link rel="stylesheet" href="./src/markjar.css" />
 	<style>
 :root {
 	/* https://github.com/twbs/bootstrap/blob/main/scss/_variables.scss */
@@ -67,7 +67,7 @@ h1 {
 		<div id="editor" class="hanging-markers"></div>
 	</main>
 	<script type="module">
-import { Markjar } from './markjar.js';
+import { Markjar } from './dist/markjar.js';
 const editor = document.getElementById('editor');
 const markjar = new Markjar(editor);
 	</script>

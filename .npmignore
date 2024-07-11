@@ -1,2 +1,5 @@
 /.vscode/
 /favicon.ico
+
+!/dist/
+/src/

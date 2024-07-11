@@ -7,10 +7,16 @@
     "email": "phu.hn.vo@gmail.com"
   },
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
   "dependencies": {
+    "highlight.js": "^11.10.0",
     "morphdom": "^2.7.3"
   },
   "devDependencies": {
-    "@highlightjs/cdn-assets": "^11.10.0"
+    "@highlightjs/cdn-assets": "^11.10.0",
+    "typescript": "^5.5.3"
   }
 }
