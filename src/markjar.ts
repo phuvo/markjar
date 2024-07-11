@@ -241,8 +241,12 @@ function PromptMark() {
 		match: /(?<=^#+ )[^\n]+/,
 	};
 
-	const OL_LIST = {
-		className: 'bullet mj-bullet mj-ol-list mj-block',
+	const OL_LIST_D1 = {
+		className: 'bullet mj-bullet mj-ol-list-d1 mj-block',
+		match: /^\d\. /,
+	};
+	const OL_LIST_DX = {
+		className: 'bullet mj-bullet mj-ol-list-dx mj-block',
 		match: /^\d+\. /,
 	};
 	const UL_LIST = {
@@ -263,7 +267,8 @@ function PromptMark() {
 			HASH,
 			HEADER_TEXT,
 
-			OL_LIST,
+			OL_LIST_D1,
+			OL_LIST_DX,
 			UL_LIST,
 			BULLET,
 		],

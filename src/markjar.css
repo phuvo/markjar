@@ -2,52 +2,55 @@
 	white-space: preserve;
 	word-wrap: break-word;
 
+	* {
+		box-sizing: border-box;
+	}
 	.mj-line {
-		min-height: 1.5em;
+		min-height: 1lh;
 	}
 }
 
 .hanging-markers {
+	.mj-block {
+		display: inline-block;
+		text-align: right;
+	}
+
 	.mj-hash {
 		transition: margin .2s;
 	}
 	.mj-h1-hash,
 	.mj-h2-hash,
 	.mj-h3-hash {
-		display: inline-block;
 		font-family: "Cascadia Code", monospace;
 		font-size: .9em;
 		font-weight: 600;
-		text-align: right;
 	}
 	.mj-h1-hash {
-		width: 1.2em;
-		margin-left: -1.2em;
+		margin-left: -2ch;
 	}
 	.mj-h2-hash {
-		width: 1.8em;
-		margin-left: -1.8em;
+		margin-left: -3ch;
 	}
 	.mj-h3-hash {
-		width: 2.4em;
-		margin-left: -2.4em;
+		margin-left: -4ch;
 	}
 
 	.mj-bullet {
 		transition: margin .2s;
 	}
-	.mj-ol-list,
-	.mj-ul-list {
-		display: inline-block;
-		text-align: right;
+	.mj-ol-list-d1 {
+		width: 1.1em;
+		margin-left: -1.1em;
+		padding-right: .1em;
 	}
-	.mj-ol-list {
-		width: 1.8em;
-		margin-left: -1.8em;
+	.mj-ol-list-dx {
+		width: 1.6em;
+		margin-left: -1.6em;
+		padding-right: .1em;
 	}
 	.mj-ul-list {
-		width: 1.2em;
-		margin-left: -1.2em;
+		margin-left: -2ch;
 		font-family: "Cascadia Code", monospace;
 		font-size: .9em;
 	}
