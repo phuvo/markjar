@@ -2,12 +2,6 @@ import hljs from 'highlight.js/lib/core';
 import morphdom from 'morphdom';
 
 
-interface CursorPos {
-	line: number;
-	column: number;
-}
-
-
 export class Markjar {
 	constructor(private editor: HTMLElement) {
 		editor.contentEditable = 'true';
@@ -23,9 +17,9 @@ export class Markjar {
 
 
 	setText(text: string) {
-		const pos = this.#getCursorPos();
+		const range = this.getSelectionRange();
 		this.#updateText(text);
-		this.#setCursorPos(pos);
+		this.setSelectionRange(range);
 	}
 
 
@@ -47,43 +41,46 @@ export class Markjar {
 	}
 
 
-	#getCursorPos(): CursorPos | null {
+	getSelectionRange(): SelectionRange | null {
 		const selection = window.getSelection();
-		if (!selection) {
+		if (!selection || selection.rangeCount === 0) {
 			return null;
 		}
 
 		const range = selection.getRangeAt(0);
-		const element = this.#getLineElement(range.startContainer);
-		if (!element) {
+		const start = this.#calculateTextPos(range.startContainer, range.startOffset);
+		if (!start) {
 			return null;
 		}
 
-		const preRange = range.cloneRange();
-		preRange.selectNodeContents(element);
-		preRange.setEnd(range.endContainer, range.endOffset);
-
-		const line = Array.prototype.indexOf.call(this.editor.children, element);
-		const column = preRange.toString().length;
-
-		return { line, column };
+		const end = range.collapsed ? null : this.#calculateTextPos(range.endContainer, range.endOffset);
+		return { start, end };
 	}
 
 
-	#setCursorPos(pos: CursorPos | null) {
+	setSelectionRange(range: SelectionRange | null) {
 		const selection = window.getSelection();
-		const range = document.createRange();
+		const newRange = document.createRange();
 
-		if (!pos || !selection) {
+		if (!selection || !range) {
 			return;
 		}
 
-		const validLine = Math.min(Math.max(pos.line, 0), this.editor.children.length - 1);
-		const element = this.editor.children[validLine];
-		moveCursorToColumn(element as HTMLElement, pos.column, range);
+		const startPos = this.#calculateNodePos(range.start);
+		if (!startPos) {
+			return;
+		}
+		newRange.setStart(startPos.node, startPos.offset);
+
+		const endPos = range.end ? this.#calculateNodePos(range.end) : null;
+		if (endPos) {
+			newRange.setEnd(endPos.node, endPos.offset);
+		} else {
+			newRange.collapse(true);
+		}
 
 		selection.removeAllRanges();
-		selection.addRange(range);
+		selection.addRange(newRange);
 	}
 
 
@@ -91,15 +88,15 @@ export class Markjar {
 		const ranges = event.getTargetRanges();
 		console.assert(ranges.length === 1);
 
-		const line = this.#getLineElement(ranges[0].startContainer);
-		if (line) {
-			this.#changedLines.add(line);
+		const lineNode = this.#getLineNode(ranges[0].startContainer);
+		if (lineNode) {
+			this.#changedLines.add(lineNode);
 			this.#requestForUpdate();
 		}
 	};
 
 
-	#getLineElement(node: Node) {
+	#getLineNode(node: Node) {
 		if (node === this.editor) {
 			return null;
 		}
@@ -117,7 +114,7 @@ export class Markjar {
 
 
 	#requestForUpdate = makeIdle(() => {
-		const pos = this.#getCursorPos();
+		const range = this.getSelectionRange();
 
 		this.#changedLines.forEach(line => {
 			if (line.parentElement !== this.editor) {
@@ -133,48 +130,81 @@ export class Markjar {
 			this.editor.replaceChild(createLine(''), br);
 		});
 
-		this.#setCursorPos(pos);
+		this.setSelectionRange(range);
 	}, 100);
+
+
+	#calculateTextPos(node: Node, offset: number): TextPos | null {
+		const lineNode = this.#getLineNode(node);
+		if (!lineNode) {
+			return null;
+		}
+
+		const range = document.createRange();
+		range.selectNodeContents(lineNode);
+		range.setEnd(node, offset);
+
+		const line = Array.prototype.indexOf.call(this.editor.childNodes, lineNode);
+		const column = range.toString().length;
+		return { line, column };
+	}
+
+
+	#calculateNodePos(pos: TextPos): NodePos | null {
+		const lineNode = this.editor.childNodes[pos.line];
+		if (!lineNode) {
+			return null;
+		}
+
+		if (lineNode.textContent!.length === 0) {
+			return { node: lineNode, offset: 0 };
+		}
+
+		let offset = 0;
+		const walkNode = (node: Node): NodePos | null => {
+			if (node.nodeType === Node.TEXT_NODE) {
+				const text = node.textContent!;
+				if (offset + text.length >= pos.column) {
+					return getTarget(node);
+				}
+				offset += text.length;
+			} else {
+				for (const child of node.childNodes) {
+					const result = walkNode(child);
+					if (result) {
+						return result;
+					}
+				}
+			}
+			return null;
+		};
+		const getTarget = (node: Node): NodePos => {
+			const sibling = node.parentElement!.nextSibling;
+			if (sibling && shouldSetCursor(sibling)) {
+				return { node: sibling, offset: 0 };
+			}
+			return { node, offset: pos.column - offset };
+		};
+		return walkNode(lineNode);
+	}
 }
 
 
-function moveCursorToColumn(element: HTMLElement, column: number, range: Range) {
-	let offset = 0;
-	let found = false;
+interface TextPos {
+	line: number;
+	column: number;
+}
 
-	const walkNode = (node: Node) => {
-		if (node.nodeType === Node.TEXT_NODE) {
-			const text = node.textContent!;
-			if (offset + text.length >= column) {
-				moveTo(node);
-				found = true;
-			} else {
-				offset += text.length;
-			}
-		} else {
-			for (const child of node.childNodes) {
-				if (found) break;
-				walkNode(child);
-			}
-		}
-	};
 
-	const moveTo = (node: Node) => {
-		const sibling = node.parentElement!.nextSibling;
-		if (sibling && shouldSetCursor(sibling)) {
-			range.setEnd(sibling, 0);
-		} else {
-			range.setEnd(node, column - offset);
-		}
-		range.collapse();
-	};
+interface NodePos {
+	node: Node;
+	offset: number;
+}
 
-	if (element.textContent!.length === 0) {
-		range.setEnd(element, 0);
-		range.collapse();
-	} else {
-		walkNode(element);
-	}
+
+interface SelectionRange {
+	start: TextPos;
+	end: TextPos | null;
 }
 
 
@@ -188,24 +218,24 @@ function makeIdle<F extends (...args: Parameters<F>) => void>(fn: F, timeout: nu
 
 
 function doHighlight(text: string) {
-    return hljs.highlight(text, { language: 'promptmark' }).value;
+	return hljs.highlight(text, { language: 'promptmark' }).value;
 }
 
 
 function createLine(text: string) {
-    const line = document.createElement('div');
-    line.className = 'mj-line';
-    line.innerHTML = text ? doHighlight(text) : '<br>';
-    return line;
+	const line = document.createElement('div');
+	line.className = 'mj-line';
+	line.innerHTML = text ? doHighlight(text) : '<br>';
+	return line;
 }
 
 
 function updateLine(text: string) {
-    const newLine = createLine(text);
+	const newLine = createLine(text);
 	if (newLine.lastChild && isFixedWidthBlock(newLine.lastChild)) {
-        newLine.insertAdjacentHTML('beforeend', '<span class="mj-cursor"></span>');
-    }
-    return newLine;
+		newLine.insertAdjacentHTML('beforeend', '<span class="mj-cursor"></span>');
+	}
+	return newLine;
 }
 
 
