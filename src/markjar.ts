@@ -12,7 +12,7 @@ export class Markjar {
 
 
 	getText() {
-		return Array.from(this.editor.children).map(line => line.textContent).join('\n');
+		return Array.from(this.editor.childNodes).map(line => line.textContent).join('\n');
 	}
 
 
@@ -96,7 +96,7 @@ export class Markjar {
 	};
 
 
-	#getLineNode(node: Node) {
+	#getLineNode(node: Node): ChildNode | null {
 		if (node === this.editor) {
 			return null;
 		}
@@ -104,13 +104,13 @@ export class Markjar {
 			return null;
 		}
 		if (node.parentElement === this.editor) {
-			return node;
+			return node as ChildNode;
 		}
-		return node.parentElement.closest('div');
+		return this.#getLineNode(node.parentElement);
 	}
 
 
-	#changedLines = new Set<Node>();
+	#changedLines = new Set<ChildNode>();
 
 
 	#requestForUpdate = makeIdle(() => {
@@ -121,13 +121,20 @@ export class Markjar {
 				console.warn('Line not in editor', line);
 				return;
 			}
-			const newLine = updateLine(line.textContent || '');
+
+			const text = line.textContent || '';
+			if (text && this.#containsLineBreak(line)) {
+				line.replaceWith(...this.#generateLines(line));
+				return;
+			}
+
+			const newLine = updateLine(text);
 			morphdom(line, newLine);
 		});
 		this.#changedLines.clear();
 
 		this.editor.querySelectorAll(':scope > br').forEach(br => {
-			this.editor.replaceChild(createLine(''), br);
+			br.replaceWith(createLine(''));
 		});
 
 		this.setSelectionRange(range);
@@ -186,6 +193,34 @@ export class Markjar {
 			return { node, offset: pos.column - offset };
 		};
 		return walkNode(lineNode);
+	}
+
+
+	#containsLineBreak(line: Node) {
+		if (line.nodeName === '#text') {
+			return line.textContent!.includes('\n');
+		}
+		return (line as HTMLElement).querySelector('br, div, p') !== null;
+	}
+
+
+	#generateLines(line: Node) {
+		const text = line.nodeName === '#text'
+			? line.textContent!
+			: this.#normalizeText(line);
+		return text.split('\n').map(createLine);
+	}
+
+
+	#normalizeText(line: Node) {
+		const elem = line.cloneNode(true) as HTMLElement;
+		elem.querySelectorAll('div, p').forEach(div => {
+			div.replaceWith(...div.childNodes, '\n');
+		});
+		elem.querySelectorAll('br').forEach(br => {
+			br.replaceWith('\n');
+		});
+		return elem.textContent!;
 	}
 }
 
